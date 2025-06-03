@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Classificador Bayes</title>
+</head>
+<body>
+    <h1>Teorema de Bayes - Classificação de Spam</h1>
+    <form method="post">
+        <label>Digite sua mensagem:</label><br>
+        <input type="text" name="mensagem" required><br><br>
+        <button type="submit">Classificar</button>
+    </form>
+    {% if resultado %}
+        <h2>Resultado: {{ resultado }}</h2>
+    {% endif %}
+</body>
+</html>
