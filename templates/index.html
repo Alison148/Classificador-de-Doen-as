@@ -2,17 +2,181 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Classificador Bayes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classificador de Doenças</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --background: #0d1117;
+            --container-bg: #161b22;
+            --text-color: #c9d1d9;
+            --neon-cyan: #00f5d4;
+            --border-color: #30363d;
+            --error-color: #ff4d4d;
+            /* New colors for disease outcomes */
+            --benign-color: #28a745; /* Green for benign/healthy */
+            --mild-color: #ffc107; /* Yellow for mild conditions */
+            --severe-color: #dc3545; /* Red for severe conditions */
+        }
+
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--background);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 30px rgba(0, 245, 212, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--neon-cyan);
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 0 0 5px var(--neon-cyan), 0 0 10px rgba(0, 245, 212, 0.5);
+        }
+
+        p {
+            color: #8b949e;
+            margin-bottom: 30px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            font-family: 'Fira Code', monospace;
+            font-size: 16px;
+            padding: 15px;
+            background-color: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            min-height: 120px;
+            margin-bottom: 20px;
+            color: var(--text-color);
+            resize: vertical;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        textarea::placeholder {
+            color: #484f58;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.3);
+        }
+
+        button {
+            background-color: transparent;
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, text-shadow 0.3s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background-color: var(--neon-cyan);
+            color: var(--background);
+            text-shadow: 0 0 5px var(--background);
+        }
+
+        .resultado-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid;
+            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
+            text-align: left;
+        }
+        
+        /* Styles based on the disease classification */
+        .resultado-Benigna { border-color: var(--benign-color); }
+        .resultado-Leve { border-color: var(--mild-color); }
+        .resultado-Grave { border-color: var(--severe-color); }
+        .resultado-Erro { border-color: var(--error-color); }
+
+        .resultado-box h2 {
+            margin: 0;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* Colors for titles and icons */
+        .resultado-Benigna h2 { color: var(--benign-color); }
+        .resultado-Leve h2 { color: var(--mild-color); }
+        .resultado-Grave h2 { color: var(--severe-color); }
+        .resultado-Erro h2 { color: var(--error-color); }
+        
+        .resultado-box p {
+            margin: 5px 0 0 0;
+            font-size: 16px;
+            color: #8b949e;
+        }
+    </style>
 </head>
 <body>
-    <h1>Teorema de Bayes - Classificação de Spam</h1>
-    <form method="post">
-        <label>Digite sua mensagem:</label><br>
-        <input type="text" name="mensagem" required><br><br>
-        <button type="submit">Classificar</button>
-    </form>
-    {% if resultado %}
-        <h2>Resultado: {{ resultado }}</h2>
-    {% endif %}
+
+    <div class="container">
+        <h1>Analisador de Sintomas</h1>
+        <p>Descreva os sintomas apresentados para que a IA possa classificar a condição.</p>
+
+        <form method="post">
+            <textarea name="mensagem" placeholder="Ex: Dor de cabeça forte, febre alta, tosse seca e dificuldade para respirar..." required></textarea>
+            <button type="submit">Analisar Sintomas</button>
+        </form>
+
+        {% if resultado_final %}
+            <div class="resultado-box resultado-{{ resultado_final.resultado }}">
+                <h2>
+                    <i class="{{ resultado_final.icone }}"></i> Resultado: {{ resultado_final.resultado }}
+                </h2>
+                <p>Confiança da Análise: {{ "%.2f"|format(resultado_final.probabilidade * 100) }}%</p>
+            </div>
+        {% endif %}
+
+        {% if erro %}
+            <div class="resultado-box resultado-Erro">
+                <h2>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Erro na Análise
+                </h2>
+                <p>{{ erro }}</p>
+            </div>
+        {% endif %}
+    </div>
+
 </body>
 </html>
