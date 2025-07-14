@@ -2,70 +2,72 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# --- Placeholder for a simplified "model" ---
-# In a real application, you'd load a pre-trained ML model here.
-# For demonstration, we'll use a simple keyword-based classification.
-
+# --- Função aprimorada ---
 def classify_symptoms(symptoms_text):
-    """
-    A placeholder function to classify symptoms.
-    In a real app, this would be a sophisticated ML model.
-    """
     symptoms_text_lower = symptoms_text.lower()
 
-    if "câncer" in symptoms_text_lower or \
-       "tumor" in symptoms_text_lower or \
-       "malígno" in symptoms_text_lower or \
-       "quimioterapia" in symptoms_text_lower or \
-       "metástase" in symptoms_text_lower:
+    if any(term in symptoms_text_lower for term in [
+        "câncer", "tumor", "malígno", "quimioterapia", "metástase"
+    ]):
         return {
             "resultado": "Grave",
-            "probabilidade": 0.95, # High confidence for demonstration
+            "probabilidade": 0.95,
             "icone": "fa-solid fa-skull-crossbones"
         }
-    elif "febre alta" in symptoms_text_lower and \
-         ("tosse seca" in symptoms_text_lower or "dificuldade para respirar" in symptoms_text_lower) and \
-         "dor no corpo" in symptoms_text_lower:
+    elif all(term in symptoms_text_lower for term in [
+        "febre alta", "dor no corpo"
+    ]) and any(term in symptoms_text_lower for term in [
+        "tosse seca", "dificuldade para respirar"
+    ]):
         return {
             "resultado": "Grave",
             "probabilidade": 0.85,
             "icone": "fa-solid fa-virus"
         }
-    elif "febre" in symptoms_text_lower or \
-         "dor de cabeça" in symptoms_text_lower or \
-         "gripe" in symptoms_text_lower or \
-         "resfriado" in symptoms_text_lower or \
-         "congestão nasal" in symptoms_text_lower:
+    elif any(term in symptoms_text_lower for term in [
+        "dor no peito", "falta de ar", "dificuldade para respirar", "formigamento no braço",
+        "paralisia", "fala arrastada", "perda de consciência", "confusão mental",
+        "convulsão", "rigidez na nuca", "visão turva", "desmaio", "batimentos irregulares",
+        "pele arroxeada", "lábios roxos", "hemorragia", "sangramento intenso",
+        "suor frio", "abdômen rígido", "dor abdominal extrema"
+    ]):
+        return {
+            "resultado": "Grave",
+            "probabilidade": 0.90,
+            "icone": "fa-solid fa-triangle-exclamation"
+        }
+    elif any(term in symptoms_text_lower for term in [
+        "febre", "dor de cabeça", "gripe", "resfriado", "congestão nasal", "espirro"
+    ]):
         return {
             "resultado": "Leve",
             "probabilidade": 0.70,
             "icone": "fa-solid fa-thermometer-half"
         }
-    elif "dor de barriga" in symptoms_text_lower or \
-         "enjoo" in symptoms_text_lower or \
-         "diarreia" in symptoms_text_lower:
+    elif any(term in symptoms_text_lower for term in [
+        "dor de barriga", "enjoo", "diarreia", "náusea", "vômito"
+    ]):
         return {
             "resultado": "Leve",
             "probabilidade": 0.65,
-            "icone": "fa-solid fa-poo" # Just for fun, you might want a more medical icon
+            "icone": "fa-solid fa-poo"
         }
-    elif "sem sintomas" in symptoms_text_lower or \
-         "saudável" in symptoms_text_lower or \
-         "tudo bem" in symptoms_text_lower:
+    elif any(term in symptoms_text_lower for term in [
+        "sem sintomas", "saudável", "tudo bem", "me sinto bem"
+    ]):
         return {
             "resultado": "Benigna",
             "probabilidade": 0.99,
             "icone": "fa-solid fa-heart-pulse"
         }
     else:
-        # Default for unrecognized patterns
         return {
-            "resultado": "Leve", # Default to 'Leve' if nothing specific matches
-            "probabilidade": 0.50,
+            "resultado": "Indefinido",
+            "probabilidade": 0.40,
             "icone": "fa-solid fa-question"
         }
 
-# --- Flask Routes ---
+# --- Rota principal ---
 @app.route('/', methods=['GET', 'POST'])
 def index():
     resultado_final = None
@@ -77,9 +79,7 @@ def index():
             erro = "Por favor, descreva os sintomas para análise."
         else:
             try:
-                # Call our placeholder classification function
-                classification_output = classify_symptoms(symptoms)
-                resultado_final = classification_output
+                resultado_final = classify_symptoms(symptoms)
             except Exception as e:
                 erro = f"Ocorreu um erro na análise: {e}"
 
