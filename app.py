@@ -1,89 +1,72 @@
 from flask import Flask, render_template, request
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
 
 app = Flask(__name__)
 
-# --- Função aprimorada ---
-def classify_symptoms(symptoms_text):
-    symptoms_text_lower = symptoms_text.lower()
+# Dados de treino
+descricoes = [
+    "muito verde árvores animais rios chuva",            # floresta
+    "areia sol calor pouca água cactos seco",            # deserto
+    "rochas gelo vento altitude neblina",                # montanha
+    "mar areia coqueiros sol surf ondas",                # praia
+    "lago árvores calmaria pesca pássaros",              # lago
+    "neve frio pinheiros gelo montanha branca",          # neve
+]
 
-    if any(term in symptoms_text_lower for term in [
-        "câncer", "tumor", "malígno", "quimioterapia", "metástase"
-    ]):
-        return {
-            "resultado": "Grave",
-            "probabilidade": 0.95,
-            "icone": "fa-solid fa-skull-crossbones"
-        }
-    elif all(term in symptoms_text_lower for term in [
-        "febre alta", "dor no corpo"
-    ]) and any(term in symptoms_text_lower for term in [
-        "tosse seca", "dificuldade para respirar"
-    ]):
-        return {
-            "resultado": "Grave",
-            "probabilidade": 0.85,
-            "icone": "fa-solid fa-virus"
-        }
-    elif any(term in symptoms_text_lower for term in [
-        "dor no peito", "falta de ar", "dificuldade para respirar", "formigamento no braço",
-        "paralisia", "fala arrastada", "perda de consciência", "confusão mental",
-        "convulsão", "rigidez na nuca", "visão turva", "desmaio", "batimentos irregulares",
-        "pele arroxeada", "lábios roxos", "hemorragia", "sangramento intenso",
-        "suor frio", "abdômen rígido", "dor abdominal extrema"
-    ]):
-        return {
-            "resultado": "Grave",
-            "probabilidade": 0.90,
-            "icone": "fa-solid fa-triangle-exclamation"
-        }
-    elif any(term in symptoms_text_lower for term in [
-        "febre", "dor de cabeça", "gripe", "resfriado", "congestão nasal", "espirro"
-    ]):
-        return {
-            "resultado": "Leve",
-            "probabilidade": 0.70,
-            "icone": "fa-solid fa-thermometer-half"
-        }
-    elif any(term in symptoms_text_lower for term in [
-        "dor de barriga", "enjoo", "diarreia", "náusea", "vômito"
-    ]):
-        return {
-            "resultado": "Leve",
-            "probabilidade": 0.65,
-            "icone": "fa-solid fa-poo"
-        }
-    elif any(term in symptoms_text_lower for term in [
-        "sem sintomas", "saudável", "tudo bem", "me sinto bem"
-    ]):
-        return {
-            "resultado": "Benigna",
-            "probabilidade": 0.99,
-            "icone": "fa-solid fa-heart-pulse"
-        }
-    else:
-        return {
-            "resultado": "Indefinido",
-            "probabilidade": 0.40,
-            "icone": "fa-solid fa-question"
-        }
+classes = [
+    "Floresta",
+    "Deserto",
+    "Montanha",
+    "Praia",
+    "Lago",
+    "Nevado"
+]
 
-# --- Rota principal ---
+# Treinamento do modelo
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(descricoes)
+modelo = MultinomialNB()
+modelo.fit(X, classes)
+
+# Função de classificação
+def classificar_natureza(texto):
+    texto_vetor = vectorizer.transform([texto])
+    predicao = modelo.predict(texto_vetor)[0]
+    prob = max(modelo.predict_proba(texto_vetor)[0])
+
+    icones = {
+        "Floresta": "fa-tree",
+        "Deserto": "fa-sun",
+        "Montanha": "fa-mountain",
+        "Praia": "fa-umbrella-beach",
+        "Lago": "fa-water",
+        "Nevado": "fa-snowflake"
+    }
+
+    return {
+        "resultado": predicao,
+        "probabilidade": round(prob, 2),
+        "icone": f"fa-solid {icones.get(predicao, 'fa-question')}"
+    }
+
+# Rota principal
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    resultado_final = None
+    resultado = None
     erro = None
 
     if request.method == 'POST':
-        symptoms = request.form['mensagem']
-        if not symptoms:
-            erro = "Por favor, descreva os sintomas para análise."
+        descricao = request.form.get('mensagem', '').strip()
+        if not descricao:
+            erro = "Descreva o ambiente natural."
         else:
             try:
-                resultado_final = classify_symptoms(symptoms)
+                resultado = classificar_natureza(descricao)
             except Exception as e:
-                erro = f"Ocorreu um erro na análise: {e}"
+                erro = f"Erro na análise: {e}"
 
-    return render_template('index.html', resultado_final=resultado_final, erro=erro)
+    return render_template('index.html', resultado=resultado, erro=erro)
 
 if __name__ == '__main__':
     app.run(debug=True)
